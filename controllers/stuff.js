@@ -140,7 +140,7 @@ exports.createLike = (req, res) => {
       res.status(200).json({ message: "♥" });
     })
     .catch((error) => {
-      // KO code 500
-      res.status(500).json({ error });
+      // KO code 400
+      res.status(400).json({ error });
     });
 };
