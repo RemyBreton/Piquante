@@ -4,7 +4,7 @@
 const mongoose = require("mongoose");
 require('dotenv').config()
 const password = process.env.DB_PASSWORD // mesure de securité
-const username = process.env.DB_USERNAME
+const username = process.env.DB_USERNAME // mesure de securité
 
 const express = require("express"); // importation d'express
 
