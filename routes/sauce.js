@@ -7,7 +7,7 @@ const router = express.Router();
 
 const auth = require('../middleware/auth');
 const multer = require('../middleware/multer-config');
-const sauceCtrl = require('../controllers/stuff');
+const sauceCtrl = require('../controllers/sauce');
 
 /**************************** CRUD + ACHEMINEMENT + DROIT ****************************/
 /************************************************************************************/

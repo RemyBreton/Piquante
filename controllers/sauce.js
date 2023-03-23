@@ -8,17 +8,20 @@ exports.createThing = (req, res, next) => {
   const sauce = new Sauce({
     ...thingObject,
     userId: req.auth.userId,
-    imageUrl: `${req.protocol}://${req.get("host")}/images/${ // PROTOCOL = HTTP + FILENAME = NOM DU FICHIER
+    imageUrl: `${req.protocol}://${req.get("host")}/images/${
+      // PROTOCOL = HTTP + FILENAME = NOM DU FICHIER
       req.file.filename
     }`, // generation de l'url de l'image
   });
 
   sauce
     .save() // enregistrement dans la bdd
-    .then(() => { // OK
+    .then(() => {
+      // OK
       res.status(201).json({ message: "Objet enregistré !" });
     })
-    .catch((error) => { // KO
+    .catch((error) => {
+      // KO
       res.status(400).json({ error });
     });
 };
@@ -48,13 +51,16 @@ exports.modifyThing = (req, res, next) => {
         }`, // recuperation de l'objet en recreant l'url de l'image
       }
     : { ...req.body }; // sinon recuperation de l'objet directement dans le corp de la requete
-
   delete thingObject._userId;
   Sauce.findOne({ _id: req.params.id }) // recuperation de l'objet dans la bdd
     .then((sauce) => {
       if (sauce.userId != req.auth.userId) {
         res.status(401).json({ message: "Not authorized" });
       } else {
+        const filename = sauce.imageUrl.split("/images/")[1]; // suppression de l'image dans son dossier
+        fs.unlink(`images/${filename}`, () => {
+          Sauce.deleteOne({ _id: req.params.id });
+        });
         Sauce.updateOne(
           { _id: req.params.id },
           { ...thingObject, _id: req.params.id }
@@ -75,7 +81,7 @@ exports.deleteThing = (req, res, next) => {
       if (sauce.userId != req.auth.userId) {
         res.status(401).json({ message: "Not authorized" });
       } else {
-        const filename = sauce.imageUrl.split("/images/")[1]; // suppression de l'image dans son dossier 
+        const filename = sauce.imageUrl.split("/images/")[1]; // suppression de l'image dans son dossier
         fs.unlink(`images/${filename}`, () => {
           Sauce.deleteOne({ _id: req.params.id })
             .then(() => {
@@ -105,42 +111,42 @@ exports.getAllSauce = (req, res, next) => {
 
 exports.createLike = (req, res) => {
   Sauce.findOne({ _id: req.params.id })
-    // Recuperation de la sauce selectionné 
+    // Recuperation de la sauce selectionné
     .then((sauce) => {
-      // la personne aime à la sauce
       if (req.body.like == 1) {
-        sauce.likes++;  // +1 like
+        // Vérifier si l'utilisateur a déjà aimé la sauce
+        if (sauce.usersLiked.includes(req.body.userId)) {
+          return res.status(400).json({ error: "L'utilisateur a déjà Like cette sauce." });
+        }
+        // La personne aime à la sauce
+        sauce.likes++; // +1 like
         sauce.usersLiked.push(req.body.userId);
         sauce.save();
       }
-
+      // Les autres conditions restent les mêmes
       if (req.body.like == -1) {
-        // La personne n'aime pas la sauce
+        if (sauce.usersDisliked.includes(req.body.userId)) {
+          return res.status(400).json({ error: "L'utilisateur a déjà Dislike cette sauce." });
+        }
         sauce.dislikes++; // +1 dislike
         sauce.usersDisliked.push(req.body.userId);
         sauce.save();
       }
-      // si erreur de la personne
+
       if (req.body.like == 0) {
         if (sauce.usersLiked.indexOf(req.body.userId) != -1) {
-          // condition de suppression du like en fonction de l'id de la personne
           sauce.likes--; // retrait du like
           sauce.usersLiked.splice(sauce.usersLiked.indexOf(req.body.userId), 1);
-        } else {
-          // condition de suppression du dislike en fonction de l'id de la personne
+        } else if (sauce.usersDisliked.indexOf(req.body.userId) != -1) {
           sauce.dislikes--; // retrait du dislike
-          sauce.usersDisliked.splice(
-            sauce.usersDisliked.indexOf(req.body.userId),
-            1
-          );
+          sauce.usersDisliked.splice(sauce.usersDisliked.indexOf(req.body.userId), 1);
         }
         sauce.save();
       }
-      // OK
+
       res.status(200).json({ message: "♥" });
     })
     .catch((error) => {
-      // KO code 400
       res.status(400).json({ error });
     });
 };

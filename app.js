@@ -12,7 +12,7 @@ const express = require("express"); // importation d'express
 
 const app = express(); // permettra de crée une application express
 
-const sauceRoutes = require("./routes/stuff");
+const sauceRoutes = require("./routes/sauce");
 const userRoutes = require("./routes/user");
 const path = require("path");
 
